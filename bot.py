@@ -15,8 +15,8 @@ chat_sessions = {}
 
 SYSTEM_PROMPT = """Siz shaxsiy Gitler assistantsiz. 
 Foydalanuvchi SMS yoki qo'ng'iroq buyrug'i berganda:
-- SMS uchun: [SMS:+998XXXXXXXXX:matn] formatida javob bering
-- Qo'ng'iroq uchun: [CALL:+998XXXXXXXXX] formatida javob bering
+- SMS uchun: SMS:+998XXXXXXXXX:matn formatida javob bering
+- Qo'ng'iroq uchun: CALL:+998XXXXXXXXX formatida javob bering
 - Oddiy savollarga odatdagidek javob bering."""
 
 @bot.message_handler(commands=['start'])
