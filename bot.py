@@ -13,7 +13,7 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 bot = telebot.TeleBot(BOT_TOKEN)
 chat_sessions = {}
 
-SYSTEM_PROMPT = """Siz shaxsiy Jarvis assistantsiz. 
+SYSTEM_PROMPT = """Siz shaxsiy Gitler assistantsiz. 
 Foydalanuvchi SMS yoki qo'ng'iroq buyrug'i berganda:
 - SMS uchun: [SMS:+998XXXXXXXXX:matn] formatida javob bering
 - Qo'ng'iroq uchun: [CALL:+998XXXXXXXXX] formatida javob bering
@@ -22,7 +22,7 @@ Foydalanuvchi SMS yoki qo'ng'iroq buyrug'i berganda:
 @bot.message_handler(commands=['start'])
 def start(message):
     chat_sessions[message.chat.id] = []
-    bot.reply_to(message, "Salom! Men sizning shaxsiy Jarvis assistantingizman!")
+    bot.reply_to(message, "Salom! Men sizning shaxsiy Gitler assistantingizman!")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
@@ -32,26 +32,21 @@ def handle_message(message):
     if user_id not in chat_sessions:
         chat_sessions[user_id] = []
 
-    # Tarixga qo'shish
-    chat_sessions[user_id].append({
-        "role": "user",
-        "parts": [user_text]
-    })
+    chat_sessions[user_id].append(user_text)
+    history_text = "\n".join(chat_sessions[user_id][-10:])
+    full_prompt = SYSTEM_PROMPT + "\n\nSuhbat:\n" + history_text
 
-    # So'rov yuborish
-    response = client.models.generate_content(
-        model='gemini-2.0-flash',
-        contents=[{"role": "user", "parts": [SYSTEM_PROMPT]}] + chat_sessions[user_id]
-    )
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=full_prompt
+        )
+        reply = response.text
+    except Exception as e:
+        reply = f"Xato: {str(e)}"
+        logging.error(e)
 
-    reply = response.text
-
-    # Bot javobini tarixga qo'shish
-    chat_sessions[user_id].append({
-        "role": "model",
-        "parts": [reply]
-    })
-
+    chat_sessions[user_id].append(f"Bot: {reply}")
     bot.reply_to(message, reply)
 
 bot.polling()
