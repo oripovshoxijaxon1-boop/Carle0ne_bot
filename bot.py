@@ -5,8 +5,8 @@ from google import genai
 
 logging.basicConfig(level=logging.INFO)
 
-BOT_TOKEN = os.environ.get('BOT_TOKEN')
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+BOT_TOKEN  os.environ.get('BOT_TOKEN')
+GEMINI_API_KEY  os.environ.get('GEMINI_API_KEY')
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
