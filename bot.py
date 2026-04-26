@@ -1,12 +1,14 @@
 import os
 import logging
 import telebot
+import requests
 from groq import Groq
 
 logging.basicConfig(level=logging.INFO)
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+MACRODROID_CALL_WEBHOOK = "https://trigger.macrodroid.com/28493cc3-e6c4-4e3c-bdfd-6a5420bf28a0/call"
 
 client = Groq(api_key=GROQ_API_KEY)
 
@@ -53,6 +55,15 @@ def handle_message(message):
         "role": "assistant",
         "content": reply
     })
+
+    # CALL webhook
+    if reply.startswith("CALL:"):
+        number = reply.replace("CALL:", "").strip()
+        try:
+            requests.post(MACRODROID_CALL_WEBHOOK, data=number)
+            logging.info(f"Webhook yuborildi: {number}")
+        except Exception as e:
+            logging.error(f"Webhook xato: {e}")
 
     bot.reply_to(message, reply)
 
