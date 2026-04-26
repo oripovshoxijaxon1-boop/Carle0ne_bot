@@ -60,4 +60,4 @@ def handle_message(message):
 # Botni uzluksiz ishlashini ta'minlash
 if __name__ == "__main__":
     logging.info("Bot ishga tushdi...")
-    bot.infinity_polling()
+    bot.infinity_polling(skip_pending=True)
