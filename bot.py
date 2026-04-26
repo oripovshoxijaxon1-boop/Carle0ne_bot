@@ -1,24 +1,19 @@
-
 import os
 import logging
 import telebot
-from google import genai
+from groq import Groq
 
-# Loglarni sozlash
 logging.basicConfig(level=logging.INFO)
 
-# Railway Variables'dan ma'lumotlarni olish va ehtimoliy "=" belgilaridan tozalash
-BOT_TOKEN = os.environ.get('BOT_TOKEN', '').replace('=', '').strip()
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '').replace('=', '').strip()
+BOT_TOKEN = os.environ.get('BOT_TOKEN')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 
-# Gemini Client yaratish
-client = genai.Client(api_key=GEMINI_API_KEY)
+client = Groq(api_key=GROQ_API_KEY)
 
-# Telegram Botni ishga tushirish
 bot = telebot.TeleBot(BOT_TOKEN)
 chat_sessions = {}
 
-SYSTEM_PROMPT = """Siz shaxsiy assistantsiz. 
+SYSTEM_PROMPT = """Siz shaxsiy Gitler assistantsiz. 
 Foydalanuvchi SMS yoki qo'ng'iroq buyrug'i berganda:
 - SMS uchun: SMS:+998XXXXXXXXX:matn formatida javob bering
 - Qo'ng'iroq uchun: CALL:+998XXXXXXXXX formatida javob bering
@@ -27,7 +22,7 @@ Foydalanuvchi SMS yoki qo'ng'iroq buyrug'i berganda:
 @bot.message_handler(commands=['start'])
 def start(message):
     chat_sessions[message.chat.id] = []
-    bot.reply_to(message, "Salom! Men sizning shaxsiy assistantingizman!")
+    bot.reply_to(message, "Salom! Men sizning shaxsiy Gitler assistantingizman!")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
@@ -37,27 +32,32 @@ def handle_message(message):
     if user_id not in chat_sessions:
         chat_sessions[user_id] = []
 
-    chat_sessions[user_id].append(f"Foydalanuvchi: {user_text}")
-    
-    # Tarixni yig'ish
-    history_text = "\n".join(chat_sessions[user_id][-10:])
-    full_prompt = f"{SYSTEM_PROMPT}\n\nSuhbat tarixi:\n{history_text}"
+    chat_sessions[user_id].append({
+        "role": "user",
+        "content": user_text
+    })
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + chat_sessions[user_id][-10:]
 
     try:
-        # Gemini 2.0 Flash modelini chaqirish
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=full_prompt
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages
         )
-        reply = response.text
+        reply = response.choices[0].message.content
     except Exception as e:
-        reply = f"Gemini API xatosi: {str(e)}"
-        logging.error(f"Xato yuz berdi: {e}")
+        reply = f"Xato: {str(e)}"
+        logging.error(e)
 
-    chat_sessions[user_id].append(f"Bot: {reply}")
+    chat_sessions[user_id].append({
+        "role": "assistant",
+        "content": reply
+    })
+
     bot.reply_to(message, reply)
 
-# Botni uzluksiz ishlashini ta'minlash
 if __name__ == "__main__":
     logging.info("Bot ishga tushdi...")
+    import time
+    time.sleep(5)
     bot.infinity_polling(skip_pending=True)
