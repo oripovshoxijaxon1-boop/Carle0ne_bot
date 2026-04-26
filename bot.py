@@ -60,7 +60,7 @@ def handle_message(message):
     if reply.startswith("CALL:"):
         number = reply.replace("CALL:", "").strip()
         try:
-            requests.post(MACRODROID_CALL_WEBHOOK, data=number)
+            requests.get(f"{MACRODROID_CALL_WEBHOOK}?number={number}")
             logging.info(f"Webhook yuborildi: {number}")
         except Exception as e:
             logging.error(f"Webhook xato: {e}")
